@@ -1,19 +1,17 @@
 #!/bin/bash
-echo "----------------------------------------------------------------"
-# Node setup
+echo "---NODE---"
 # sudo curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
 # sudo apt-get install -y nodejs git make g++ gcc
-echo "----------------------------------------------------------------"
-# Z2M setup
+echo "---Z2M---"
 sudo mkdir /opt/zigbee2mqtt
 sudo git clone https://github.com/Koenkk/zigbee2mqtt.git /opt/zigbee2mqtt
 cd /opt/zigbee2mqtt
 git fetch
 git checkout master
-git pull
+git config pull.rebase false  # merge
 npm ci
 sudo chown -R ${USER}: /opt/zigbee2mqtt
-echo "----------------------------------------------------------------"
+echo "---CONF---"
 cat > /opt/zigbee2mqtt/data/configuration.yaml <<EOL
 # Home Assistant integration (MQTT discovery)
 homeassistant: false
@@ -45,7 +43,7 @@ advanced:
   log_level: debug
   network_key: GENERATE
 EOL
-echo "----------------------------------------------------------------"
+echo "---SERVICE---"
 cat > /etc/systemd/system/zigbee2mqtt.service <<EOL
 [Unit]
 Description=zigbee2mqtt
@@ -54,8 +52,7 @@ After=network.target
 [Service]
 ExecStart=npm start
 WorkingDirectory=/opt/zigbee2mqtt
-StandardOutput=inherit
-# Or use StandardOutput=null if you don't want Zigbee2MQTT messages filling syslog, for more options see systemd.exec(5)
+StandardOutput=null
 StandardError=inherit
 Restart=always
 User=andrsi
@@ -63,6 +60,6 @@ User=andrsi
 [Install]
 WantedBy=multi-user.target
 EOL
-echo "END"
+echo "---END---"
 sudo systemctl enable zigbee2mqtt.service
 sudo reboot
